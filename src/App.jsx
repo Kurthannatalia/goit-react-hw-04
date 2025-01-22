@@ -31,51 +31,44 @@ function App() {
     setIsOpen(false);
   };
 
-  const handleSearch = async (searchTerm) => {
-    try {
-      setImages([]);
-      setLoading(true);
-      setError(false);
-      setPage(1);
-      setSearchTerm(searchTerm);
-      const data = await fetchImages(searchTerm);
-      setImages(data.results);
-      setTotalCollection(data.total);
-      setEndOfCollection(false);
-      setHasLoadedImages(true);
-    } catch (error) {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+  const handleSearch = (searchTerm) => {
+    setImages([]);
+    setError(false);
+    setPage(1);
+    setSearchTerm(searchTerm);
+  };
+
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
   };
   useEffect(() => {
-    const fetchTotalImages = async () => {
-      const total = Math.ceil(totalCollection / 15);
-      setTotalImages(total);
+    if (!searchTerm) return;
+
+    const fetchImagesData = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchImages(searchTerm, page);
+        setImages((prevImages) =>
+          page === 1 ? data.results : [...prevImages, ...data.results]
+        );
+        setTotalCollection(data.total);
+        setHasLoadedImages(true);
+        setEndOfCollection(page >= Math.ceil(data.total / 15));
+      } catch (error) {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchTotalImages();
-  }, [totalCollection]);
+    fetchImagesData();
+  }, [searchTerm, page]);
+
   useEffect(() => {
-    if (page >= totalImages) {
-      setEndOfCollection(true);
-    } else {
-      setEndOfCollection(false);
-    }
-  }, [page, totalImages]);
-  const handleLoadMore = async () => {
-    try {
-      setLoading(true);
-      const nextPageData = await fetchImages(searchTerm, page + 1);
-      setPage((prevPage) => prevPage + 1);
-      setImages((prevImages) => [...prevImages, ...nextPageData.results]);
-    } catch (error) {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const total = Math.ceil(totalCollection / 15);
+    setTotalImages(total);
+  }, [totalCollection]);
+
   return (
     <>
       <SearchBar onSearch={handleSearch} />
