@@ -19,7 +19,7 @@ function App() {
   const [selectedImages, setSelectedImages] = useState("");
   const [endOfCollection, setEndOfCollection] = useState(false);
   const [hasLoadedImages, setHasLoadedImages] = useState(false);
-  const [totalCollection, setTotalCollection] = useState({});
+  const [totalCollection, setTotalCollection] = useState(0);
   const [totalImages, setTotalImages] = useState(0);
 
   const handleOpenModal = (imageUrl) => {
@@ -33,7 +33,7 @@ function App() {
 
   const handleSearch = (searchTerm) => {
     setImages([]);
-    setError(false);
+    setError(null);
     setPage(1);
     setSearchTerm(searchTerm);
   };
@@ -41,6 +41,7 @@ function App() {
   const handleLoadMore = () => {
     setPage((prevPage) => prevPage + 1);
   };
+
   useEffect(() => {
     if (!searchTerm) return;
 
@@ -53,9 +54,9 @@ function App() {
         );
         setTotalCollection(data.total);
         setHasLoadedImages(true);
-        setEndOfCollection(page >= Math.ceil(data.total / 15));
+        setEndOfCollection(data.results.length === 0);
       } catch (error) {
-        setError(true);
+        setError(error.message || "Щось пішло не так");
       } finally {
         setLoading(false);
       }
@@ -65,8 +66,10 @@ function App() {
   }, [searchTerm, page]);
 
   useEffect(() => {
-    const total = Math.ceil(totalCollection / 15);
-    setTotalImages(total);
+    if (totalCollection > 0) {
+      const total = Math.ceil(totalCollection / 15);
+      setTotalImages(total);
+    }
   }, [totalCollection]);
 
   return (
